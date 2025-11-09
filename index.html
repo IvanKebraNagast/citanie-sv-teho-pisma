@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Čítanie svätého písma</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    :root {
+      --gap-sm: 8px;
+      --gap-md: 16px;
+      --gap-lg: 24px;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,.1);
+    }
+    /* Náhľadové štýly (export má inline) */
+    .intro-outro {
+      background-color: #fef08a;
+      color: #2563eb;
+      font-size: 16px;
+      padding: 1rem;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: bold;
+      margin: 1rem 0; /* ⚑ proti lepeniu */
+    }
+    .chapter-title {
+      text-align: center;
+      color: #ef4444;
+      font-size: 22px;
+      background-color: #bbf7d0;
+      padding: 1rem;
+      margin: 2rem 0 1rem 0; /* ⚑ spodná medzera proti lepeniu textu */
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .reader-text {
+      color: #ef4444;
+      font-weight: bold;
+    }
+    .reader-block {
+      margin: 1rem 0 .75rem 0; /* ⚑ medzera nad aj pod menom čitateľa */
+    }
+    .verse {
+      margin: .5rem 0; /* ⚑ verše nie sú nalepené */
+    }
+    hr {
+      border-top-width: 2px;
+      border-color: #d1d5db;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+    /* mini badge */
+    .pill {
+      font-size: 12px;
+      line-height: 1;
+      padding: .35rem .6rem;
+      border-radius: 9999px;
+      background: #eef2ff;
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container space-y-6">
+    <h1 class="text-3xl font-bold text-center text-gray-800">Čítanie svätého písma</h1>
+
+    <div class="flex flex-col space-y-4">
+      <label for="readerNamesInput" class="text-gray-600 font-semibold">Mená čitateľov (oddeľte čiarkou):</label>
+      <textarea id="readerNamesInput" rows="2"
+        class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300">Aďka, Danka, Emília, Janka, Markétka, Milan</textarea>
+
+      <!-- Panel na správu čitateľov -->
+      <div class="flex gap-2 items-center">
+        <button id="manageReadersBtn" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-full hover:bg-purple-700 transition shadow-md">
+          Spravovať čitateľov
+        </button>
+        <span class="pill">Mazanie/prechristenie mien nemení verše</span>
+      </div>
+      <div id="manageReadersPanel" class="hidden p-4 border rounded-lg bg-gray-100 mt-2 space-y-2"></div>
+      <!-- /Panel -->
+
+      <label for="introInput" class="text-gray-600 font-semibold">Úvod:</label>
+      <textarea id="introInput" rows="3" placeholder="Sem vložte text úvodu..."
+        class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"></textarea>
+
+      <textarea id="textInput" rows="10" placeholder="Sem vložte text na úpravu (verše a nadpisy kapitol, každý riadok samostatne)..."
+        class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"></textarea>
+
+      <label for="outroInput" class="text-gray-600 font-semibold">Záver:</label>
+      <textarea id="outroInput" rows="3" placeholder="Sem vložte text záveru..."
+        class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"></textarea>
+
+      <div class="flex flex-wrap gap-2">
+        <button id="previewBtn" class="flex-1 bg-blue-600 text-white font-bold py-3 px-6 rounded-full hover:bg-blue-700 transition shadow-lg">
+          Zobraziť náhľad (pridať verše z poľa)
+        </button>
+        <button id="exportBtn" class="flex-1 bg-green-600 text-white font-bold py-3 px-6 rounded-full hover:bg-green-700 transition shadow-lg">
+          Export do Wordu
+        </button>
+        <button id="clearBtn" class="flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-full hover:bg-red-700 transition shadow-lg">
+          Vymazať aktuálny text (verše)
+        </button>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button id="saveBtn" class="bg-gray-800 text-white font-bold py-2 px-4 rounded-full hover:bg-black transition shadow">
+          Uložiť do localStorage
+        </button>
+        <button id="loadBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-full hover:bg-indigo-700 transition shadow">
+          Načítať z localStorage
+        </button>
+        <button id="wipeBtn" class="bg-amber-600 text-white font-bold py-2 px-4 rounded-full hover:bg-amber-700 transition shadow">
+          Vymazať uložené dáta (localStorage)
+        </button>
+      </div>
+    </div>
+
+    <div id="previewOutput" class="p-6 bg-gray-50 border border-gray-200 rounded-lg min-h-[300px] overflow-auto">
+      <h2 class="text-xl font-semibold text-center text-gray-700 mb-2">Náhľad dokumentu</h2>
+      <!-- sem ide náhľad -->
+    </div>
+
+    <div id="verseCountStatus" class="p-4 rounded-lg text-center font-semibold mt-4 hidden"></div>
+  </div>
+
+  <script>
+    // --- DOM prvky ---
+    const introInput = document.getElementById('introInput');
+    const outroInput = document.getElementById('outroInput');
+    const textInput = document.getElementById('textInput');
+    const previewBtn = document.getElementById('previewBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const loadBtn = document.getElementById('loadBtn');
+    const wipeBtn = document.getElementById('wipeBtn');
+
+    const previewOutput = document.getElementById('previewOutput');
+    const readerNamesInput = document.getElementById('readerNamesInput');
+    const verseCountStatus = document.getElementById('verseCountStatus');
+
+    const manageReadersBtn = document.getElementById('manageReadersBtn');
+    const manageReadersPanel = document.getElementById('manageReadersPanel');
+
+    // --- Stav ---
+    let allVerses = [];                 // všetky riadky (kapitoly aj verše)
+    const versesPerBlock = 18;          // veľkosť bloku na čitateľa
+    const LS_KEY = 'ctenie_data_v1';    // kľúč v localStorage (verzia 1)
+
+    // ---------- Uloženie / načítanie ----------
+    function saveData() {
+      const data = {
+        readers: readerNamesInput.value.trim(),
+        intro: introInput.value,
+        outro: outroInput.value,
+        verses: allVerses
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return false;
+      try {
+        const data = JSON.parse(raw);
+        if (typeof data.readers === 'string') readerNamesInput.value = data.readers;
+        if (typeof data.intro === 'string')   introInput.value = data.intro;
+        if (typeof data.outro === 'string')   outroInput.value = data.outro;
+        if (Array.isArray(data.verses))       allVerses = data.verses.slice();
+        updatePreview(true);
+        return true;
+      } catch (e) {
+        console.error('Chyba pri čítaní localStorage:', e);
+        return false;
+      }
+    }
+
+    function wipeData() {
+      localStorage.removeItem(LS_KEY);
+    }
+
+    // ---------- Rozdelenie čítania ----------
+    function calculateReaderDistribution(readers, totalVerses, versesPerBlock) {
+      const distribution = {};
+      const numReaders = readers.length;
+      if (numReaders === 0 || totalVerses === 0) return distribution;
+
+      readers.forEach(r => distribution[r] = 0);
+
+      let verseIndex = 0;
+      let blockIndex = 0;
+      while (verseIndex < totalVerses) {
+        const currentReaderName = readers[blockIndex % numReaders];
+        const blockSize = Math.min(versesPerBlock, totalVerses - verseIndex);
+        distribution[currentReaderName] += blockSize;
+        verseIndex += blockSize;
+        blockIndex++;
+      }
+      return distribution;
+    }
+
+    function checkVerseCounts(totalVerses, distribution) {
+      const remainder = totalVerses % versesPerBlock;
+      verseCountStatus.className = 'p-4 rounded-lg text-center font-semibold mt-4'; // reset
+      verseCountStatus.classList.remove('hidden');
+
+      if (totalVerses === 0) {
+        verseCountStatus.classList.add('hidden');
+        return;
+      }
+
+      let distributionDetails = '<div class="text-left mt-2">';
+      for (const [reader, count] of Object.entries(distribution)) {
+        distributionDetails += `<p class="ml-4">• ${reader}: <strong>${count}</strong> veršov</p>`;
+      }
+      distributionDetails += '</div>';
+        // --- NOVINKA: kontrola limitu 54 veršov ---
+  const maxPerReader = 54;
+  const extraVerses = [];
+  for (const [reader, count] of Object.entries(distribution)) {
+    if (count > maxPerReader) {
+      extraVerses.push({ reader, over: count - maxPerReader });
+    }
+  }
+
+  let trimButtonHTML = '';
+  if (extraVerses.length > 0) {
+    trimButtonHTML = `
+      <div class="bg-red-100 text-red-700 p-3 rounded mt-4">
+        <strong>Pozor!</strong> Niektorí čitatelia majú viac ako ${maxPerReader} veršov:
+        <ul class="mt-2">
+          ${extraVerses.map(e => `<li>• ${e.reader}: +${e.over} veršov</li>`).join('')}
+        </ul>
+        <button id="trimVersesBtn" class="bg-red-600 text-white px-3 py-1 rounded mt-2 hover:bg-red-700">
+          Orezať na ${maxPerReader} veršov
+        </button>
+      </div>
+    `;
+  }
+
+      let statusText = '';
+      if (remainder === 0) {
+        verseCountStatus.classList.add('bg-green-100','text-green-800');
+        statusText = `Všetky bloky sú kompletné (${versesPerBlock} veršov). Celkový počet veršov: ${totalVerses}.`;
+      } else {
+        verseCountStatus.classList.add('bg-red-100','text-red-800');
+        statusText = `Upozornenie: Posledný blok má len ${remainder} veršov. Celkový počet veršov: ${totalVerses}.`;
+      }
+
+      verseCountStatus.innerHTML = `
+        ${statusText}
+        <hr class="my-2 border-gray-400">
+        <div class="font-bold">Detailné rozdelenie čítania:</div>
+        ${distributionDetails}
+      `;
+    }
+
+    // ---------- Náhľad ----------
+    function updatePreview(skipSave=false) {
+      let html = '';
+      previewOutput.innerHTML = '';
+      let verseCount = 0;
+      const readerBlockCounts = {};
+
+      const readers = readerNamesInput.value
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      if (readers.length === 0) readers.push('Neznámy čitateľ');
+
+      // Úvod
+      const introText = introInput.value.trim();
+      if (introText) {
+        html += `<p class="intro-outro export-style">${introText}</p>`;
+      }
+
+      // Hlavný obsah (kapitoly aj verše)
+     allVerses.forEach((line) => {
+  const raw = line || '';
+  const lc = raw.toLowerCase();
+
+  if (lc.includes('kapitola')) {
+    // Nadpis kapitoly (bez pripočítania k veršom)
+    html += '<hr class="border-t-2 border-gray-300 my-4">';
+    html += `<p class="chapter-title export-style-chapter">${raw}</p>`;
+    html += '<hr class="border-t-2 border-gray-300 my-4">';
+  } else {
+    // Len verše sa počítajú do blokov
+    if (verseCount % versesPerBlock === 0) {
+      const currentReaderIndex = Math.floor((verseCount / versesPerBlock) % readers.length);
+      const currentReaderName = readers[currentReaderIndex];
+      readerBlockCounts[currentReaderName] = (readerBlockCounts[currentReaderName] || 0) + 1;
+      html += `
+        <div class="reader-block">
+          <p class="text-center font-bold mb-3">
+            <span class="reader-text export-style-reader">${readerBlockCounts[currentReaderName]}. ${currentReaderName} ♥</span>
+          </p>
+        </div>`;
+    }
+    html += `<p class="verse"><span>${verseCount + 1}.</span> ${raw}</p>`;
+    verseCount++;
+  }
+});
+
+
+      // Záver
+      const outroText = outroInput.value.trim();
+      if (outroText) {
+        html += `<p class="intro-outro export-style mt-6">${outroText}</p>`;
+      }
+
+      // Výstup + stav
+      previewOutput.innerHTML = html;
+      const distribution = calculateReaderDistribution(readers, verseCount, versesPerBlock);
+      checkVerseCounts(verseCount, distribution);
+
+      if (!skipSave) autoSaveDebounced();
+    }
+
+    // ---------- Spracovanie vstupu veršov (pridanie) ----------
+    function handlePreviewAddVerses() {
+      const inputText = textInput.value.trim();
+      if (inputText) {
+        const lines = inputText.split('\n').map(l => l.trim()).filter(Boolean);
+        allVerses = allVerses.concat(lines);
+        textInput.value = '';
+      }
+      updatePreview();
+    }
+
+    // ---------- Čistenie aktuálneho textu (nie storage) ----------
+    function handleClearText() {
+      allVerses = [];
+      updatePreview();
+      previewOutput.innerHTML = '<h2 class="text-xl font-semibold text-center text-gray-700 mb-2">Náhľad dokumentu</h2>';
+      verseCountStatus.classList.add('hidden');
+      autoSaveDebounced();
+    }
+
+    // ---------- Export do Wordu ----------
+    function exportToWord() {
+      const content = previewOutput.innerHTML;
+      if (!content || content.includes('Náhľad dokumentu')) {
+        const msg = document.createElement('p');
+        msg.textContent = 'Náhľad je prázdny. Najprv vložte a upravte text.';
+        msg.style.color = 'red';
+        msg.style.textAlign = 'center';
+        previewOutput.appendChild(msg);
+        return;
+      }
+
+      const temp = document.createElement('div');
+      temp.innerHTML = content;
+
+      // Inline štýly pre stabilný export
+      temp.querySelectorAll('.export-style').forEach(el => {
+        el.setAttribute('style', 'background-color:#fef08a;color:#2563eb;font-size:16px;padding:1rem;text-align:center;font-weight:bold;margin:1rem 0;border:1px solid #fef08a;');
+      });
+      temp.querySelectorAll('.export-style-chapter').forEach(el => {
+        el.setAttribute('style', 'text-align:center;color:#ef4444;font-size:22px;background-color:#bbf7d0;padding:1rem;font-weight:bold;margin:2rem 0 1rem 0;border:1px solid #bbf7d0;');
+      });
+      temp.querySelectorAll('.export-style-reader').forEach(el => {
+        el.setAttribute('style', 'color:#ef4444;font-weight:bold;');
+      });
+
+      const htmlToExport = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>Dokument</title>
+          <style>
+            body{font-family:Inter,Arial,sans-serif;line-height:1.6;margin:2rem;color:#333;}
+            .verse{margin:.5rem 0;}
+            hr{border-top-width:2px;border-color:#d1d5db;margin:1rem 0;}
+          </style>
+        </head>
+        <body>
+          ${temp.innerHTML}
+        </body>
+      </html>`;
+
+      const blob = new Blob([htmlToExport], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'upraveny_text.doc';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ---------- Panel čitateľov (rename/delete/add) ----------
+    function renderReadersManager() {
+      const readers = readerNamesInput.value.split(',').map(v => v.trim()).filter(Boolean);
+      if (readers.length === 0) {
+        manageReadersPanel.innerHTML = `
+          <p class="text-sm text-red-500">Zadajte aspoň jedného čitateľa.</p>
+          <button id="addReaderBtn" class="w-full bg-green-600 text-white font-bold py-1 px-3 rounded-full mt-2 hover:bg-green-700">➕ Pridať čitateľa</button>
+        `;
+        return;
+      }
+
+      manageReadersPanel.innerHTML = readers.map((name, i) => `
+        <div class="flex justify-between items-center bg-white p-2 rounded shadow">
+          <span class="truncate pr-2">${i+1}. ${name}</span>
+          <div class="flex gap-2">
+            <button class="renameReaderBtn bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600" data-index="${i}">✏️</button>
+            <button class="deleteReaderBtn bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600" data-index="${i}">❌</button>
+          </div>
+        </div>
+      `).join('') + `
+        <button id="addReaderBtn" class="w-full bg-green-600 text-white font-bold py-1 px-3 rounded-full mt-2 hover:bg-green-700">➕ Pridať čitateľa</button>
+      `;
+    }
+
+    manageReadersBtn.addEventListener('click', () => {
+      manageReadersPanel.classList.toggle('hidden');
+      if (!manageReadersPanel.classList.contains('hidden')) renderReadersManager();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'addReaderBtn') {
+        const readers = readerNamesInput.value.split(',').map(v => v.trim()).filter(Boolean);
+        const nm = prompt('Meno nového čitateľa:');
+        if (nm && nm.trim()) {
+          readers.push(nm.trim());
+          readerNamesInput.value = readers.join(', ');
+          renderReadersManager();
+          updatePreview();
+        }
+      }
+      if (e.target.classList.contains('renameReaderBtn')) {
+        const idx = Number(e.target.dataset.index);
+        const readers = readerNamesInput.value.split(',').map(v => v.trim()).filter(Boolean);
+        const nm = prompt('Nové meno:', readers[idx]);
+        if (nm && nm.trim()) {
+          readers[idx] = nm.trim();
+          readerNamesInput.value = readers.join(', ');
+          renderReadersManager();
+          updatePreview();
+        }
+      }
+      if (e.target.classList.contains('deleteReaderBtn')) {
+        const idx = Number(e.target.dataset.index);
+        const readers = readerNamesInput.value.split(',').map(v => v.trim()).filter(Boolean);
+        if (readers.length <= 1) return alert('Musí zostať aspoň 1 čitateľ.');
+        readers.splice(idx, 1);
+        readerNamesInput.value = readers.join(', ');
+        renderReadersManager();
+        updatePreview();
+      }
+    });
+
+    // ---------- AutoSave (debounce) ----------
+    let autosaveTimer = null;
+    function autoSaveDebounced() {
+      if (autosaveTimer) clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(saveData, 300);
+    }
+
+    // ---------- Listenery ----------
+    previewBtn.addEventListener('click', handlePreviewAddVerses);
+    exportBtn.addEventListener('click', exportToWord);
+    clearBtn.addEventListener('click', handleClearText);
+
+    saveBtn.addEventListener('click', () => { saveData(); alert('Uložené.'); });
+    loadBtn.addEventListener('click', () => {
+      const ok = loadData();
+      if (!ok) alert('Nenašli sa uložené dáta.');
+    });
+    wipeBtn.addEventListener('click', () => {
+      if (confirm('Naozaj vymazať všetko uložené v localStorage pre túto aplikáciu?')) {
+        wipeData();
+        alert('Uložené dáta odstránené.');
+      }
+    });
+
+    // Pri písaní priebežne render + autosave
+    introInput.addEventListener('input', () => updatePreview());
+    outroInput.addEventListener('input', () => updatePreview());
+    readerNamesInput.addEventListener('input', () => { renderReadersManager(); updatePreview(); });
+
+    // ---------- Po načítaní stránky ----------
+    // Skús načítať z localStorage; ak nie je, aspoň prázdny náhľad.
+    loadData() || updatePreview(true);
+  </script>
+</body>
+</html>
