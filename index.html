@@ -256,13 +256,6 @@
 
       let statusText = '';
       if (remainder === 0) {
-        verseCountStatus.classList.add('bg-green-100','text-green-800');
-        statusText = `Všetky bloky sú kompletné (${versesPerBlock} veršov). Celkový počet veršov: ${totalVerses}.`;
-      } else {
-        verseCountStatus.classList.add('bg-red-100','text-red-800');
-        statusText = `Upozornenie: Posledný blok má len ${remainder} veršov. Celkový počet veršov: ${totalVerses}.`;
-      }
-
       verseCountStatus.innerHTML = `
   ${statusText}
   <hr class="my-2 border-gray-400">
@@ -270,6 +263,11 @@
   ${distributionDetails}
   ${trimButtonHTML}
 `;
+} // ← TÁTO zátvorka je veľmi dôležitá!
+
+
+
+
 
 
     // ---------- Náhľad ----------
