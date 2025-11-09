@@ -264,12 +264,13 @@
       }
 
       verseCountStatus.innerHTML = `
-        ${statusText}
-        <hr class="my-2 border-gray-400">
-        <div class="font-bold">Detailné rozdelenie čítania:</div>
-        ${distributionDetails}
-      `;
-    }
+  ${statusText}
+  <hr class="my-2 border-gray-400">
+  <div class="font-bold">Detailné rozdelenie čítania:</div>
+  ${distributionDetails}
+  ${trimButtonHTML}
+`;
+
 
     // ---------- Náhľad ----------
     function updatePreview(skipSave=false) {
