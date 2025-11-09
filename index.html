@@ -498,6 +498,23 @@
     introInput.addEventListener('input', () => updatePreview());
     outroInput.addEventListener('input', () => updatePreview());
     readerNamesInput.addEventListener('input', () => { renderReadersManager(); updatePreview(); });
+    // --- NOVINKA: tlačidlo "Orezať na 54 veršov" ---
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.id === 'trimVersesBtn') {
+    const readers = readerNamesInput.value.split(',').map(v => v.trim()).filter(Boolean);
+    const totalAllowed = readers.length * 54;
+    if (allVerses.length > totalAllowed) {
+      const toRemove = allVerses.length - totalAllowed;
+      if (confirm(`Naozaj odstrániť ${toRemove} veršov navyše (od konca)?`)) {
+        allVerses.splice(-toRemove, toRemove);
+        updatePreview();
+        alert(`Odstránených ${toRemove} veršov navyše. Každý má teraz max. 54.`);
+      }
+    } else {
+      alert('Všetci už majú správny počet veršov.');
+    }
+  }
+});
 
     // ---------- Po načítaní stránky ----------
     // Skús načítať z localStorage; ak nie je, aspoň prázdny náhľad.
